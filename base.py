@@ -45,95 +45,71 @@ def handle_dialog(res, req):
 
 
     if req['session']['new']:
-        res['response']['text'] = 'Привет! Назови своё имя!'
-        sessionStorage[user_id] = {
-            'first_name': None,  # здесь будет храниться имя
-            'game_started': False  # здесь информация о том, что пользователь начал игру. По умолчанию False
-        }
-        return
-
-    if sessionStorage[user_id]['first_name'] is None:
-        first_name = get_first_name(req)
-        if first_name is None:
-            res['response']['text'] = 'Не расслышала имя. Повтори, пожалуйста!'
-        else:
-            sessionStorage[user_id]['first_name'] = first_name
-            # создаём пустой массив, в который будем записывать города, которые пользователь уже отгадал
-            sessionStorage[user_id]['guessed_cities'] = []
-            # как видно из предыдущего навыка, сюда мы попали, потому что пользователь написал своем имя.
-            # Предлагаем ему сыграть и два варианта ответа "Да" и "Нет".
-            res['response']['text'] = f'Приятно познакомиться, {first_name.title()}. Я Алиса. Отгадаешь город по фото?'
-            res['response']['buttons'] = [
-                {
-                    'title': 'Да',
-                    'hide': True
-                },
-                {
-                    'title': 'Нет',
-                    'hide': True
-                },
-                {
-                    'title': 'Помощь',
-                    'hide': True
-                }
-            ]
-    else:
-        # У нас уже есть имя, и теперь мы ожидаем ответ на предложение сыграть.
-        # В sessionStorage[user_id]['game_started'] хранится True или False в зависимости от того,
-        # начал пользователь игру или нет.
-        if not sessionStorage[user_id]['game_started']:
-            # игра не начата, значит мы ожидаем ответ на предложение сыграть.
-            if 'да' in req['request']['nlu']['tokens']:
-                # если пользователь согласен, то проверяем не отгадал ли он уже все города.
-                # По схеме можно увидеть, что здесь окажутся и пользователи, которые уже отгадывали города
-                if len(sessionStorage[user_id]['guessed_cities']) == 3:
-                    # если все три города отгаданы, то заканчиваем игру
-                    res['response']['text'] = 'Ты отгадал все города!'
-                    res['end_session'] = True
-                else:
-                    # если есть неотгаданные города, то продолжаем игру
-                    sessionStorage[user_id]['game_started'] = True
-                    # номер попытки, чтобы показывать фото по порядку
-                    sessionStorage[user_id]['attempt'] = 1
-                    # функция, которая выбирает город для игры и показывает фото
-                    play_game(res, req)
-            elif 'помощь' in req['request']['nlu']['tokens']:
-                res['response']['text'] = 'Введи название города.'
-                res['response']['buttons'] = [
-                    {
-                        'title': 'Да',
-                        'hide': True
-                    },
-                    {
-                        'title': 'Нет',
-                        'hide': True
-                    },
-                    {
-                        'title': 'Помощь',
-                        'hide': True
-                    }
-                ]
-            elif 'нет' in req['request']['nlu']['tokens']:
-                res['response']['text'] = 'Ну и ладно!'
-                res['end_session'] = True
-            else:
-                res['response']['text'] = 'Не поняла ответа! Так да или нет?'
-                res['response']['buttons'] = [
-                    {
-                        'title': 'Да',
-                        'hide': True
-                    },
-                    {
-                        'title': 'Нет',
-                        'hide': True
-                    },
-                    {
-                        'title': 'Помощь',
-                        'hide': True
-                    }
-                ]
-        else:
-            play_game(res, req)
+        res['response']['text'] = f'Приятно познакомиться. Сегодня я предлагаю тебе окунуться в мир произведений Фёдора Михайловича Достоевского?'
+        res['response']['buttons'] = [
+            {
+                'title': 'Да',
+                'hide': True
+            },
+            {
+                'title': 'Давай',
+                'hide': True
+            },
+            {
+                'title': 'Помощь',
+                'hide': True
+            }
+        ]
+    if req['request']['original_utterance'].lower() in [
+        'да',
+        'давай',
+        'интересно',
+        'хорошо'
+    ]:
+        res['response']['text'] = 'Прекрасно! Если ты хочешь попутешествовать по этим местам, то я подготовила для тебя экскурсию по двум ключевым произведениям: «Преступление и наказание» и «Идиот»'
+        # if len(sessionStorage[user_id]['guessed_cities']) == 3:
+        #     # если все три города отгаданы, то заканчиваем игру
+        #     res['response']['text'] = 'Ты отгадал все города!'
+        #     res['end_session'] = True
+        # else:
+        #     # если есть неотгаданные города, то продолжаем игру
+        #     sessionStorage[user_id]['game_started'] = True
+        #     # номер попытки, чтобы показывать фото по порядку
+        #     sessionStorage[user_id]['attempt'] = 1
+        #     # функция, которая выбирает город для игры и показывает фото
+        #     play_game(res, req)
+    elif 'помощь' in req['request']['nlu']['tokens']:
+        res['response']['text'] = 'Введи название города.'
+        res['response']['buttons'] = [
+            {
+                'title': 'Да',
+                'hide': True
+            },
+            {
+                'title': 'Нет',
+                'hide': True
+            },
+            {
+                'title': 'Помощь',
+                'hide': True
+            }
+        ]
+    # else:
+    #     res['response']['text'] = ' Извините, не поняла ответа.'
+    #     res['response']['buttons'] = [
+    #         {
+    #             'title': 'Давай',
+    #             'hide': True
+    #         },
+    #         {
+    #             'title': 'Давай',
+    #             'hide': True
+    #         },
+    #         {
+    #             'title': 'Помощь',
+    #             'hide': True
+    #         }
+    #     ]
 
 
 def play_game(res, req):
