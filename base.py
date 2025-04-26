@@ -35,7 +35,8 @@ def handle_dialog(res, req):
     user_id = req['session']['user_id']
 
     if req['session']['new']:
-        res['response']['text'] = f'Приятно познакомиться. Сегодня я предлагаю тебе окунуться в мир произведений Фёдора Михайловича Достоевского?'
+        res['response']['text'] = (f'Приятно познакомиться. Сегодня я предлагаю тебе окунуться в мир произведений '
+                                   f'Фёдора Михайловича Достоевского!')
         res['response']['buttons'] = [
             {
                 'title': 'Да',
@@ -51,8 +52,7 @@ def handle_dialog(res, req):
             }
         ]
     if 'помощь' in req['request']['nlu']['tokens'] and req['session']['new']:
-        res['response']['text'] = 'бла бла'
-        print(0)
+        help_base(res)
 
 
     if req['request']['original_utterance'].lower() in [
@@ -94,6 +94,11 @@ def handle_dialog(res, req):
         play_pr(res, req)
     if 'Идиот' in req['request']['original_utterance']:
         play_pr(res, req)
+
+
+def help_base(res):
+    res['response']['text'] = 'бла бла'
+    print(0)
 
 
 def play_pr(res, req):
