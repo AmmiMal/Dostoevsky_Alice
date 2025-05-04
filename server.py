@@ -26,6 +26,16 @@ def main():
     return json.dumps(response)
 
 
+def help(res):
+    res['response']['text'] = ''
+    return
+
+
+def incomprehension_base(res):
+    res['response']['text'] = 'Не понимаю команды. Для продолжения диалога скажите: "Да", "Давай", "Дальше". Если хотите завершить, скажите "Хватит". Для вызова помощи, скажите команду "Помощь".'
+    return
+
+
 def handle_dialog(res, req):
     user_id = req['session']['user_id']
 
@@ -48,12 +58,15 @@ def handle_dialog(res, req):
                 'hide': True
             }
         ]
-    if 'Помощь' in req['request']['nlu']['tokens'] and req['session']['new']:
-        help_base(res)
+    if 'Помощь' in req['request']['nlu']['tokens']:
+        res['response']['text'] = 'Для продолжения диалога скажите: "Да", "Давай", "Дальше". Если хотите завершить, скажите "Хватит".'
 
+    if req['request']['nlu']['tokens'].lower() in ['хватит', 'стоп']:
+        exit()
+        # res['response']['text'] = 'Для продолжения'
 
     if req['request']['original_utterance'].lower() in [
-        'да',
+        'да', 'дальше',
         'давай',
         'интересно',
         'хорошо'
@@ -98,19 +111,17 @@ def handle_dialog(res, req):
         incomprehension_base(res)
 
 
-
-def help_base(res):
-    res['response']['text'] = 'бла бла'
-    return
-
-
-def incomprehension_base(res):
-    res['response']['text'] = 'Не понимаю команды. Для продолжения диалога скажите: "Да", "Давай", "Дальше". Если хотите завершить, Скажите "Хватит". Для вызова помощи, скажите команду "Помощь".'
-    return
-
 def play_pr(res, req):
-    res['response']['text'] = f'Отличный выбор! Итак, начнем наше путешествие! Ты выбрал Преступление и наказание. Это произведение автор задумал во время ссылки. \
-    И, видя перемены в стране и обществе, принял решение о необходимости начать роман именно в тот момент.'
+    name = req['request']['original_utterance']
+
+    res['response']['text'] = (f'Ты выбрал {name}.')
+    if name == 'Преступление и наказание':
+        res['response']['tts'] = (f'Это произвид+ение автор зад+умал во время ссылки. \
+        И, в+идя перемены в стране и обществе, пр+инял решение о неабхадимости начать роман имено в тот момент.')
+    if name == 'Идиот':
+        res['response']['tts'] = (f'Идея произведения - изобразить вполне прекрасного человека.\
+         Труднее этого, по-моему, быть ничего не может, особенно в наше время!')
+
     # user_id = req['session']['user_id']
     # attempt = sessionStorage[user_id]['attempt']
     # if attempt == 1:
