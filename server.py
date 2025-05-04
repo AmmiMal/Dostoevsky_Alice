@@ -30,8 +30,10 @@ def handle_dialog(res, req):
     user_id = req['session']['user_id']
 
     if req['session']['new']:
-        res['response']['text'] = (f'Приятно познакомиться. Сегодня я предлагаю тебе окунуться в мир произведений '
-                                   f'Фёдора Михайловича Достоевского!')
+        res['response']['text'] = (f'Привет! Сегодня я предлагаю Вам окунуться в мир произведений Фёдора Михайловича Достоевского! '
+                                   f'Я проведу Вас по местам, упоминающимся в произведениях великого классика! '
+                                   f'Вы можете пройти маршрут как вместе со мной, так и виртуально. '
+                                   f'Во время нашего путешествия вы всегда можете попросить инструкцию, сказав "Помощь". ')
         res['response']['buttons'] = [
             {
                 'title': 'Да',
@@ -46,7 +48,7 @@ def handle_dialog(res, req):
                 'hide': True
             }
         ]
-    if 'помощь' in req['request']['nlu']['tokens'] and req['session']['new']:
+    if 'Помощь' in req['request']['nlu']['tokens'] and req['session']['new']:
         help_base(res)
 
 
@@ -56,7 +58,7 @@ def handle_dialog(res, req):
         'интересно',
         'хорошо'
     ]:
-        res['response']['text'] = 'Прекрасно! Если ты хочешь попутешествовать по этим местам, то я подготовила для тебя экскурсию по двум ключевым произведениям: «Преступление и наказание» и «Идиот»'
+        res['response']['text'] = 'Прекрасно! Если Вы хотите попутешествовать по этим местам, то я подготовила для Вас экскурсию по двум ключевым произведениям: «Преступление и наказание» и «Идиот»'
         res['response']['buttons'] = [
             {
                 'title': 'Преступление и наказание',
@@ -71,6 +73,9 @@ def handle_dialog(res, req):
                 'hide': True
             }
         ]
+    else:
+        incomprehension_base(res)
+
     if 'Помощь' in req['request']['original_utterance']:
         print(1)
         res['response']['text'] = 'Выберете произведение.'
@@ -84,17 +89,24 @@ def handle_dialog(res, req):
                 'hide': True
             }]
         return
-    if 'Преступление и наказание' in req['request']['original_utterance']:
+    elif 'Преступление и наказание' in req['request']['original_utterance']:
         res['response']['text'] = 'Отличный выбор! Итак, начнем наше путешествие!'
         play_pr(res, req)
-    if 'Идиот' in req['request']['original_utterance']:
+    elif 'Идиот' in req['request']['original_utterance']:
         play_pr(res, req)
+    else:
+        incomprehension_base(res)
+
 
 
 def help_base(res):
     res['response']['text'] = 'бла бла'
-    print(0)
+    return
 
+
+def incomprehension_base(res):
+    res['response']['text'] = 'Не понимаю команды. Для продолжения диалога скажите: "Да", "Давай", "Дальше". Если хотите завершить, Скажите "Хватит". Для вызова помощи, скажите команду "Помощь".'
+    return
 
 def play_pr(res, req):
     res['response']['text'] = f'Отличный выбор! Итак, начнем наше путешествие! Ты выбрал Преступление и наказание. Это произведение автор задумал во время ссылки. \
