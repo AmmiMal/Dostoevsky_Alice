@@ -4,19 +4,12 @@ import json
 import random
 
 app = Flask(__name__)
-
 logging.basicConfig(level=logging.INFO)
-
-cities = {
-    'москва': ['997614/494dcfc652df991f14f1', '213044/8fce7841e115b5e23617'],
-    'нью-йорк': ['1540737/cfc2650a7b5b06c7acfc', '1540737/ad3179678eca46c1bc10'],
-    'париж': ["997614/b8f711c01dfbe8e6e7ae", '997614/fd5b178491d06d160ff9']
-}
 
 sessionStorage = {}
 
-
 @app.route('/post', methods=['POST'])
+
 def main():
     logging.info('Request: %r', request.json)
     response = {
@@ -36,7 +29,7 @@ def handle_dialog(res, req):
 
     if req['session']['new']:
         res['response']['text'] = (f'Приятно познакомиться. Сегодня я предлагаю тебе окунуться в мир произведений '
-                                   f'Фёдора Михайловича Достоевского!')
+                                   f'Фёдора Михайловича Достоевского. Начнем мы с тобой с произведения "Преступление и наказание" ')
         res['response']['buttons'] = [
             {
                 'title': 'Да',
@@ -276,6 +269,7 @@ def get_first_name(req):
             # Если есть сущность с ключом 'first_name', то возвращаем её значение.
             # Во всех остальных случаях возвращаем None.
             return entity['value'].get('first_name', None)
+
 
 
 if __name__ == '__main__':
