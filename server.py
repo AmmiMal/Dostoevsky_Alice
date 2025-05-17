@@ -4,11 +4,46 @@ import json
 import random
 
 app = Flask(__name__)
-
 logging.basicConfig(level=logging.INFO)
-
-
 sessionStorage = {}
+
+
+class DostoevskyLocationsIterator:
+    def __init__(self, locations_data, include_map_links=False):
+        self.locations_data = locations_data
+        self.include_map_links = include_map_links
+        self.current_index = 1  # Начинаем с location_1
+        self.max_index = len(locations_data)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.current_index > self.max_index:
+            raise StopIteration
+
+        location_key = f"location_{self.current_index}"
+        location = self.locations_data.get(location_key)
+
+        if not location:
+            raise StopIteration
+
+        response = {
+            'real_name': location['real_name'],
+            'plot': location['plot'],
+            'photo_path': location['photo_path']
+        }
+
+        # Добавляем дополнительную информацию, если она есть
+        if 'exterior_description' in location:
+            response['exterior_description'] = location['exterior_description']
+
+        # Добавляем ссылку на карты по желанию пользователя
+        if self.include_map_links:
+            response['yandex_maps_link'] = location['yandex_maps_link']
+
+        self.current_index += 1
+        return response
 
 
 @app.route('/post', methods=['POST'])
@@ -31,9 +66,27 @@ def help(res):
     return
 
 
-def incomprehension_base(res):
-    res['response']['text'] = 'Не понимаю команды. Для продолжения диалога скажите: "Да", "Давай", "Дальше". Если хотите завершить, скажите "Хватит". Для вызова помощи, скажите команду "Помощь".'
-    return
+def incomprehension_base(res, type):
+    if type == 'continue':
+        res['response']['text'] = 'Не понимаю команды. Для продолжения диалога скажите: "Да", "Давай", "Дальше". Если хотите завершить, скажите "Хватит". Для вызова помощи, скажите команду "Помощь".'
+        return
+    elif type == 'choise':
+        res['response']['text'] = 'Не понимаю команды. Для продолжения диалога скажите или нажмите на кнопку: "Да" или "Нет". Если хотите завершить, скажите "Хватит". Для вызова помощи, скажите команду "Помощь".'
+        res['response']['buttons'] = [
+            {
+                'title': 'Да',
+                'hide': True
+            },
+            {
+                'title': 'Нет',
+                'hide': True
+            },
+            {
+                'title': 'Помощь',
+                'hide': True
+            }
+        ]
+        return
 
 
 def handle_dialog(res, req):
@@ -87,7 +140,7 @@ def handle_dialog(res, req):
             }
         ]
     else:
-        incomprehension_base(res)
+        incomprehension_base(res, '')
 
     if 'Помощь' in req['request']['original_utterance']:
         print(1)
@@ -108,11 +161,12 @@ def handle_dialog(res, req):
     elif 'Идиот' in req['request']['original_utterance']:
         play_pr(res, req)
     else:
-        incomprehension_base(res)
+        incomprehension_base(res, '')
 
 
 def play_pr(res, req):
     name = req['request']['original_utterance']
+    locations_data = ''
     # Если вдруг стало скучно, скажи об этом ...
     res['response']['text'] = (f'Ты выбрал {name}.')
     if name == 'Преступление и наказание':
@@ -121,6 +175,53 @@ def play_pr(res, req):
     if name == 'Идиот':
         res['response']['tts'] = (f'Идея произведения - изобразить вполне прекрасного человека.\
          Труднее этого, по-моему, быть ничего не может, особенно в наше время!')
+    res['response']['text'] = (f'Для комфортного путешествия, пожалуйста, сообщите будут ли необходимы ссылки на локации в Яндекс Картах.')
+    res['response']['buttons'] = [
+        {
+            'title': 'Да',
+            'hide': True
+        },
+        {
+            'title': 'Нет',
+            'hide': True
+        },
+        {
+            'title': 'Помощь',
+            'hide': True
+        }
+    ]
+    if 'Помощь' in req['request']['nlu']['tokens']:
+        res['response'][
+            'text'] = 'Для продолжения диалога скажите: "Да" или "Нет". Если хотите завершить, скажите "Хватит".'
+    elif req['request']['nlu']['tokens'].lower() in ['хватит', 'стоп']:
+        exit()
+    else:
+        incomprehension_base(res, '')
+
+    if name == 'Преступление и наказание':
+        locations_data = 'Crime_and_Punishment.json'
+    if name == 'Идиот':
+        locations_data = 'Idiot.json'
+    locations_iterator = DostoevskyLocationsIterator(locations_data)
+    for location in locations_iterator:
+        print(f"Название: {location['real_name']}")
+        print(f"Описание: {location['plot']}")
+        print(f"Фото: {location['photo_path']}")
+        print("---")
+        res['response']['text'] = 'Отличный выбор! Итак, начнем наше путешествие!'
+
+    # Создаем итератор с ссылками на карты
+    locations_iterator_with_maps = DostoevskyLocationsIterator(locations_data, include_map_links=True)
+    for location in locations_iterator_with_maps:
+        print(f"Название: {location['real_name']}")
+        print(f"Описание: {location['plot']}")
+        print(f"Фото: {location['photo_path']}")
+        print(f"Ссылка на карты: {location['yandex_maps_link']}")
+        print("---")
+        res['response']['text'] = 'Отличный выбор! Итак, начнем наше путешествие!'
+
+
+
     # как-то через 1 цикл реализовать маршрут для обоих произведений (создать что-то по типу json для каждого места и \
     # сделать количество итераций по его длине, в цикли же и обрабатывать запросы пользователя)
 
