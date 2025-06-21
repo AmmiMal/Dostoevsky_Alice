@@ -12,7 +12,6 @@ logging.basicConfig(level=logging.INFO)
 sessionStorage = {}
 
 @app.route('/post', methods=['POST']) # не забываем указывать в ссылке навыка путь + \post
-
 def main():
     logging.info('Request: %r', request.json)
     response = {
@@ -100,6 +99,7 @@ def help_base(res):
 def play_pr(res, req):
     res['response']['text'] = f'Отличный выбор! Итак, начнем наше путешествие! Ты выбрал Преступление и наказание. Это произведение автор задумал во время ссылки. \
     И, видя перемены в стране и обществе, принял решение о необходимости начать роман именно в тот момент.'
+
 
 if __name__ == '__main__':
     app.run()

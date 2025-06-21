@@ -12,7 +12,6 @@ cities = {
     'париж': ["997614/b8f711c01dfbe8e6e7ae", '997614/fd5b178491d06d160ff9']
 }
 
-
 sessionStorage = {}
 
 
@@ -106,7 +105,7 @@ def handle_dialog(res, req):
     if req['session']['new']:
         res['response']['text'] = (f'Привет! Сегодня я предлагаю Вам окунуться в мир произведений Фёдора Михайловича Достоевского! '
                                    f'Я проведу Вас по местам, упоминающимся в произведениях великого классика! '
-                                   f'Вы можете пройти маршрут как вместе со мной, так и виртуально. '
+                                   f'Вы можете пройти маршрут как вместе со мной, так и виртуально.'
                                    f'Во время нашего путешествия вы всегда можете попросить инструкцию, сказав "Помощь". ')
         res['response']['buttons'] = [
             {
@@ -193,8 +192,8 @@ def handle_dialog(res, req):
     elif 'Идиот' in req['request']['original_utterance']:
         res['response']['text'] = 'Отличный выбор! Итак, начнем наше путешествие!'
         play_pr(res, req)
-    else:
-        incomprehension_base(res, 'continue')
+    # else:
+    #     incomprehension_base(res, 'continue')
 
 
 def play_pr(res, req):
@@ -238,17 +237,17 @@ def play_pr(res, req):
     if name == 'Идиот':
         locations_data = 'Idiot.json'
     locations_iterator = DostoevskyLocationsIterator(locations_data)
-    for location in locations_iterator:
-        # res['response']['card'] = {}
-        # res['response']['card']['type'] = 'BigImage'
-        # res['response']['card']['title'] = location['real_name']
-        # res['response']['card']['image_id'] = location['photo_path']
-        res['response']['text'] = location['plot']
-        res['response']['buttons'] = [
-            {
-                'title': 'Помощь',
-                'hide': True
-            }]
+    location = next(locations_iterator)
+    # res['response']['card'] = {}
+    # res['response']['card']['type'] = 'BigImage'
+    # res['response']['card']['title'] = location['real_name']
+    # res['response']['card']['image_id'] = location['photo_path']
+    res['response']['text'] = location['plot']
+    res['response']['buttons'] = [
+        {
+            'title': 'Помощь',
+            'hide': True
+        }]
     #
     # # Создаем итератор со ссылками на карты
     # locations_iterator_with_maps = DostoevskyLocationsIterator(locations_data, include_map_links=True)
