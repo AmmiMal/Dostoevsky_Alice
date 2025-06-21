@@ -21,6 +21,8 @@ class DostoevskyLocationsIterator:
         self.include_map_links = include_map_links
         self.current_index = 1  # Начинаем с location_1
         self.max_index = len(locations_data)
+        with open(self.locations_data, 'r', encoding='utf-8') as file:
+            self.data = json.load(file)
 
     def __iter__(self):
         return self
@@ -28,11 +30,9 @@ class DostoevskyLocationsIterator:
     def __next__(self):
         if self.current_index > self.max_index:
             raise StopIteration
-        with open(self.locations_data, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-
+        print(self.current_index)
         location_key = f"location_{self.current_index}"
-        location = data.get(location_key)
+        location = self.data.get(location_key)
 
         if not location:
             raise StopIteration
@@ -40,7 +40,8 @@ class DostoevskyLocationsIterator:
         response = {
             'real_name': location['real_name'],
             'plot': location['plot'],
-            'photo_path': location['photo_path']
+            'photo_path': location['photo_path'],
+            'yandex_maps_link': location['yandex_maps_link'] #временно, пока не работает логика с вопросм о необходимости ссылки(может и уберем)
         }
 
         # Добавляем дополнительную информацию, если она есть
@@ -53,6 +54,11 @@ class DostoevskyLocationsIterator:
 
         self.current_index += 1
         return response
+
+    def get_location_by_index(self, index):
+        if index >= len(self.locations_data):
+            raise IndexError("Нет больше локаций")
+        return self.locations_data[index]
 
 
 @app.route('/post', methods=['POST'])
@@ -99,7 +105,7 @@ def incomprehension_base(res, type):
 
 
 def handle_dialog(res, req):
-    print(1)
+    print(11)
     user_id = req['session']['user_id']
 
     if req['session']['new']:
@@ -122,7 +128,6 @@ def handle_dialog(res, req):
             }
         ]
 
-
     if any(token in ['хватит', 'стоп'] for token in [token.lower() for token in req['request']['nlu']['tokens']]):
         res['response']['end_session'] = True
         res['response']['text'] = 'До свидания!'
@@ -138,7 +143,7 @@ def handle_dialog(res, req):
         ]
         return
 
-    if req['request']['original_utterance'].lower() in ['да', 'дальше', 'давай', 'интересно', 'хорошо']:
+    if any(word in req['request']['original_utterance'].lower() for word in ['да', 'дальше', 'давай', 'интересно', 'хорошо']):
         res['response'][
             'text'] = 'Прекрасно! Если Вы хотите попутешествовать по этим местам, я подготовила экскурсию по двум ключевым произведениям: «Преступление и наказание» и «Идиот»'
         res['response']['buttons'] = [
@@ -149,14 +154,14 @@ def handle_dialog(res, req):
     # else:
     #     incomprehension_base(res, '')
     #     return
-    print(2)
-    if 'преступление и наказание' in req['request']['original_utterance'].lower():
+    print(22)
+    if all(word in req['request']['original_utterance'].lower() for word in ['преступлени', 'наказани']):
         res['response']['text'] = 'Отличный выбор! Итак, начнём наше путешествие!'
         play_pr(res, req)
     elif 'идиот' in req['request']['original_utterance'].lower():
         res['response']['text'] = 'Отличный выбор! Итак, начнём наше путешествие!'
         play_pr(res, req)
-    elif 'Помощь' in req['request']['original_utterance']:
+    elif 'помощ' in req['request']['original_utterance'].lower():
         res['response']['text'] = 'Выберете произведение.'
         res['response']['buttons'] = [
             {
@@ -169,11 +174,7 @@ def handle_dialog(res, req):
             }]
         return
 
-
-
-
-
-    if 'Помощь' in req['request']['original_utterance']:
+    if 'помощ' in req['request']['original_utterance'].lower():
         print(1)
         res['response']['text'] = 'Выберете произведение.'
         res['response']['buttons'] = [
@@ -186,19 +187,26 @@ def handle_dialog(res, req):
                 'hide': True
             }]
         return
-    elif 'Преступление и наказание' in req['request']['original_utterance']:
+    elif all(word in req['request']['original_utterance'].lower() for word in ['преступлени', 'наказани']):
         res['response']['text'] = 'Отличный выбор! Итак, начнем наше путешествие!'
         play_pr(res, req)
-    elif 'Идиот' in req['request']['original_utterance']:
+    elif 'идиот' in req['request']['original_utterance'].lower():
         res['response']['text'] = 'Отличный выбор! Итак, начнем наше путешествие!'
+        play_pr(res, req)
+    if res['session']['message_id'] >=3:
         play_pr(res, req)
     # else:
     #     incomprehension_base(res, 'continue')
 
 
 def play_pr(res, req):
-    name = req['request']['original_utterance']
-    print(name)
+    user_id = req['session']['user_id']
+    # Получаем сохраненное состояние
+    state = req.get('state', {}).get('session', {}) or {}
+    index = state.get('iterator_index', 0)
+    name = req['request']['original_utterance'] #по-хорошему здесь надо ловить странные произношения пользователя
+    # и все равно делать вывод о произведении, но пока не делаем это
+    #print(name)
     locations_data = ''
     links_need = 'Для комфортного путешествия, пожалуйста, сообщите будут ли необходимы ссылки на локации в Яндекс Картах.'
     # # Если вдруг стало скучно, скажи об этом ...
@@ -224,10 +232,10 @@ def play_pr(res, req):
                 'hide': True
             }
         ]
-    if 'Помощь' in req['request']['nlu']['tokens']:
+    if 'помощ' in req['request']['original_utterance'].lower():
         res['response'][
             'text'] = 'Для продолжения диалога скажите: "Да" или "Нет". Если хотите завершить, скажите "Хватит".'
-    elif any(word in req['request']['nlu']['tokens'] for word in['хватит', 'стоп']):
+    elif any(word in req['request']['original_utterance'].lower() for word in['хватит', 'стоп']):
         exit()
     else:
         incomprehension_base(res, '')
@@ -236,19 +244,73 @@ def play_pr(res, req):
         locations_data = 'Crime_and_Punishment.json'
     if name == 'Идиот':
         locations_data = 'Idiot.json'
-    locations_iterator = DostoevskyLocationsIterator(locations_data)
-    location = next(locations_iterator)
-    # res['response']['card'] = {}
-    # res['response']['card']['type'] = 'BigImage'
-    # res['response']['card']['title'] = location['real_name']
-    # res['response']['card']['image_id'] = location['photo_path']
-    res['response']['text'] = location['plot']
-    res['response']['buttons'] = [
-        {
-            'title': 'Помощь',
-            'hide': True
-        }]
-    #
+    locations_data = 'Crime_and_Punishment.json'
+
+    # прописать взаимодействие с кнопкой Ссылка на локацию
+
+    if locations_data:
+        print(33)
+        locations_iterator = DostoevskyLocationsIterator(locations_data)
+        try:
+            location = next(locations_iterator)
+            print(location)
+            res['response']['card'] = {}
+            res['response']['card']['type'] = 'BigImage'
+            res['response']['card']['title'] = location['real_name']
+            res['response']['card']['image_id'] = location['photo_path']
+            res['response']['tts'] = location['plot']
+            res['response']['text'] = location['plot']
+            res['response']['buttons'] = [
+                {'title': 'Далее', 'hide': True},
+                {'title': 'Помощь', 'hide': True},{
+                'title': 'Ссылка на локацию',
+                'url': location['yandex_maps_link'],
+                'payload': {},
+                "hide": True
+            }
+            ]
+            # Сохраняем новый индекс
+            res['session_state'] = {
+                'iterator_index': index + 1
+            }
+        except IndexError:
+            res['response']['text'] = 'Вы прошли все локации этого произведения!'
+            res['response']['end_session'] = True
+
+        if any(word in req['request']['original_utterance'].lower() for word in ['далее', 'дальше', 'даль', 'продолж']):
+            print(44)
+            # Продолжение итерации
+            try:
+                location = next(locations_iterator)
+                res['response']['card'] = {}
+                res['response']['card']['type'] = 'BigImage'
+                res['response']['card']['title'] = location['real_name']
+                res['response']['card']['image_id'] = location['photo_path']
+                res['response']['tts'] = location['plot']
+                res['response']['text'] = location['plot']
+                res['response']['buttons'] = [
+                    {'title': 'Далее', 'hide': True},
+                    {'title': 'Помощь', 'hide': True}
+                ]
+                res['session_state'] = {
+                    'iterator_index': index + 1
+                }
+                # print(locations_iterator.current_index)
+            except IndexError:
+                res['response']['text'] = 'Вы прошли все локации.'
+                res['response']['end_session'] = True
+            return
+            # res['response']['card'] = {}
+            # res['response']['card']['type'] = 'BigImage'
+            # res['response']['card']['title'] = location['real_name']
+            # res['response']['card']['image_id'] = location['photo_path']
+            # res['response']['text'] = location['plot']
+            # res['response']['buttons'] = [
+            #     {
+            #         'title': 'Помощь',
+            #         'hide': True
+            #     }]
+            #
     # # Создаем итератор со ссылками на карты
     # locations_iterator_with_maps = DostoevskyLocationsIterator(locations_data, include_map_links=True)
     # for location in locations_iterator_with_maps:
