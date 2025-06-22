@@ -35,7 +35,7 @@ class HelpHandler(Handler):
             help_replicas = []
 
             if help_text:
-                help_replicas = [{"text": help_text}]
+                help_replicas = [{"text": help_text, "buttons": [{"title": "Дальше", "hide": True}]}] # add buttons
             elif self.global_help_text:
                 help_replicas = self.global_help_text
 
@@ -57,6 +57,6 @@ class WaitForNextHandler(Handler):
             else:
                 from scene import HelpContextScene
                 # Если пользователь не сказал "дальше"
-                replica = {"text": "Скажите \"дальше\", чтобы продолжить."}
+                replica = {"text": "Скажите \"дальше\", чтобы продолжить.", "buttons": [{"title": "Дальше", "hide": True}]}
                 return HelpContextScene([replica], scene)
         return super().handle(user_input, scene)

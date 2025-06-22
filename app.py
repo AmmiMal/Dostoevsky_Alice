@@ -105,6 +105,7 @@ def main():
                 response['response']['card']['type'] = card['type']
                 response['response']['card']['title'] = card['title']
                 response['response']['card']['image_id'] = card['image_id']
+                response['response']['card']['button'] = card['button']
         else:
             response['response']['text'] = "Это конец диалога."
 
