@@ -1,4 +1,3 @@
-
 # scene.py
 class Scene:
     def __init__(self, resource: dict, handlers):

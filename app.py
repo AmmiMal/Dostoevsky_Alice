@@ -4,7 +4,7 @@ import logging
 import threading
 
 from scene import Scene, HelpContextScene
-from handlers import ExitHandler, HelpHandler, WaitForNextHandler
+from handlers import ExitHandler, HelpHandler, WaitForNextHandler, NextSceneHandler
 from utils import load_scene_from_file, format_buttons
 from config import DEFAULT_SCENE, END_SCENE, SCENES_DIR, HELP_SCENE
 
@@ -28,16 +28,17 @@ def get_help_replicas():
 
 def get_handlers(load_scene_func):
     exit_handler = ExitHandler()
-    help_handler = HelpHandler(get_help_replicas(), successor=None)
+    help_handler = HelpHandler(get_help_replicas, successor=None)
+    next_scene_handler = NextSceneHandler(load_scene_func, successor=None)
     wait_next_handler = WaitForNextHandler(successor=None)
 
-    # Строим цепочку:
     exit_handler._successor = help_handler
-    help_handler._successor = wait_next_handler
+    help_handler._successor = next_scene_handler
+    next_scene_handler._successor = wait_next_handler
     wait_next_handler._successor = None
 
-
     return [exit_handler]
+
 
 @app.route('/post', methods=['POST'])
 def main():
@@ -89,7 +90,6 @@ def main():
 
         replica = next_scene.get_next_replica()
         if replica:
-            # print(replica)
             text = replica.get('text', '')
             card = replica.get('card', {})
             buttons_data = replica.get('buttons', [])
@@ -116,4 +116,3 @@ def main():
 
 if __name__ == "__main__":
     app.run()
-

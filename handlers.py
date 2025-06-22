@@ -1,5 +1,6 @@
 # handlers.py
 import re
+from utils import load_scene_from_file
 
 
 class Handler:
@@ -35,7 +36,7 @@ class HelpHandler(Handler):
             help_replicas = []
 
             if help_text:
-                help_replicas = [{"text": help_text, "buttons": [{"title": "Дальше", "hide": True}]}] # add buttons
+                help_replicas = [{"text": help_text, "buttons": [{"title": "Дальше", "hide": True}]}]  # add buttons
             elif self.global_help_text:
                 help_replicas = self.global_help_text
 
@@ -51,12 +52,27 @@ class WaitForNextHandler(Handler):
 
     def handle(self, user_input, scene):
         if hasattr(scene, 'waiting_for_next') and scene.waiting_for_next:
-            if re.search(r"(дальше|далее|продолжи|вперёд|ещё|преступлени|идиот)", user_input, re.IGNORECASE):
+            if re.search(r"(дальше|далее|продолжи|вперёд|ещё)", user_input, re.IGNORECASE):
                 scene.waiting_for_next = False
                 return scene  # продолжаем текущую сцену
             else:
                 from scene import HelpContextScene
                 # Если пользователь не сказал "дальше"
-                replica = {"text": "Скажите \"дальше\", чтобы продолжить.", "buttons": [{"title": "Дальше", "hide": True}]}
+                replica = {"text": "Скажите \"дальше\", чтобы продолжить.",
+                           "buttons": [{"title": "Дальше", "hide": True}]}
                 return HelpContextScene([replica], scene)
+        return super().handle(user_input, scene)
+
+
+class NextSceneHandler(Handler):
+    def __init__(self, load_scene_func, successor=None):
+        super().__init__(successor)
+        self.load_scene_func = load_scene_func
+
+    def handle(self, user_input, scene):
+        print(scene)
+        if scene.next_scenes:
+            for pattern, next_scene_name in scene.next_scenes.items():
+                if re.search(pattern, user_input, re.IGNORECASE):
+                    return self.load_scene_func(next_scene_name)
         return super().handle(user_input, scene)
