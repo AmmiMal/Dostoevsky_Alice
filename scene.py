@@ -1,13 +1,16 @@
 # scene.py
+import re
+
+
 class Scene:
     def __init__(self, resource: dict, handlers):
         self.handlers = handlers
         self.replics = resource.get("replics", [])
         self.scene_buttons = resource.get("buttons", [])
-        # self.scene_suggestions = resource.get("suggestions", [])
         self.scene_help = resource.get("help")
         self.next_scenes = resource.get("next_scenes", {})
         self.waiting_for_next = False
+        self.book_name = resource.get("book_name")
         self.current_line = 0
 
     def get_next_replica(self):
@@ -22,9 +25,6 @@ class Scene:
 
     def get_scene_buttons(self):
         return self.scene_buttons
-
-    # def get_scene_suggestions(self):
-    #     return self.scene_suggestions
 
     def get_scene_help(self):
         return self.scene_help
@@ -42,13 +42,6 @@ class Scene:
                 return result
         print("[Scene.handle_input] Никакой обработчик не обработал запрос.")
         return self
-
-    # def handle_input(self, user_input):
-    #     for handler in self.handlers:
-    #         result = handler.handle(user_input, self)
-    #         if result is not None:
-    #             return result
-    #     return self
 
     def get_next_scenes(self):
         return self.next_scenes
@@ -78,10 +71,33 @@ class HelpContextScene:
             return self.previous_scene.get_scene_buttons()
         return []
 
-    # def get_scene_suggestions(self):
-    #     if hasattr(self.previous_scene, 'get_scene_suggestions'):
-    #         return self.previous_scene.get_scene_suggestions()
-    #     return []
-
     def handle_input(self, user_input):
         return self.previous_scene.handle_input(user_input)
+
+
+class FactScene:
+    def __init__(self, facts, return_scene):
+        self.facts = facts
+        self.return_scene = return_scene
+        self.current_line = 0
+
+    def get_next_replica(self):
+        if self.current_line == 0:
+            fact = self.facts
+            self.current_line += 1
+            return fact
+        return None
+
+    def is_done(self):
+        return self.current_line >= 1
+
+    def handle_input(self, user_input):
+        return self.return_scene.handle_input(user_input)
+
+    def get_scene_buttons(self):
+        if hasattr(self.return_scene, 'get_scene_buttons'):
+            return self.return_scene.get_scene_buttons()
+        return []
+
+    def get_next_scenes(self):
+        return self.return_scene.get_next_scenes()

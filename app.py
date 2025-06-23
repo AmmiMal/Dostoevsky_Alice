@@ -4,7 +4,7 @@ import logging
 import threading
 
 from scene import Scene, HelpContextScene
-from handlers import ExitHandler, HelpHandler, WaitForNextHandler, NextSceneHandler
+from handlers import ExitHandler, HelpHandler, WaitForNextHandler, NextSceneHandler, FactHandler
 from utils import load_scene_from_file, format_buttons
 from config import DEFAULT_SCENE, END_SCENE, SCENES_DIR, HELP_SCENE
 
@@ -29,11 +29,13 @@ def get_help_replicas():
 def get_handlers(load_scene_func):
     exit_handler = ExitHandler()
     help_handler = HelpHandler(get_help_replicas, successor=None)
+    fact_handler = FactHandler(load_scene_func, successor=None)
     next_scene_handler = NextSceneHandler(load_scene_func, successor=None)
     wait_next_handler = WaitForNextHandler(successor=None)
 
     exit_handler._successor = help_handler
-    help_handler._successor = next_scene_handler
+    help_handler._successor = fact_handler
+    fact_handler._successor = next_scene_handler
     next_scene_handler._successor = wait_next_handler
     wait_next_handler._successor = None
 
@@ -79,14 +81,34 @@ def main():
             return jsonify(response)
 
         next_scene = current_scene.handle_input(user_input)
+
+        is_next_command = user_input in ['далее', 'дальше', 'следующая']
+
         if next_scene == 'Exit':
             response['response']['end_session'] = True
-            response['response']['text'] = "До свидания!"
+            response['response']['text'] = "Спасибо, что воспользовались навыком! \n До скорой встречи!"
             return jsonify(response)
 
         if next_scene.is_done():
-            next_scene_name = next(iter(next_scene.get_next_scenes().values()), END_SCENE)
-            next_scene = load_scene(next_scene_name)
+            # Сцена закончилась
+            if is_next_command:
+                # Команда "далее" — повторяем последнюю реплику
+                last_replica = next_scene.replics[-1] if next_scene.replics else {"text": "Конец."}
+                buttons_data = last_replica.get('buttons', [])
+                buttons_scene = next_scene.get_scene_buttons()
+                all_buttons = buttons_data + buttons_scene
+
+                response['response']['text'] = last_replica.get('text', '')
+                response['response']['tts'] = last_replica.get('text', '')
+                response['response']['buttons'] = format_buttons(all_buttons)
+                # Не меняем сцену — остаёмся в той же сцене
+                sessionStorage[session_id] = next_scene
+                return jsonify(response)
+
+            else:
+                # Обычный переход по next_scenes
+                next_scene_name = next(iter(next_scene.get_next_scenes().values()), END_SCENE)
+                next_scene = load_scene(next_scene_name)
 
         replica = next_scene.get_next_replica()
         if replica:
@@ -98,6 +120,7 @@ def main():
             all_buttons = buttons_data + buttons_scene
 
             response['response']['text'] = text
+            response['response']['tts'] = text
             response['response']['buttons'] = format_buttons(all_buttons)
 
             if card != {}:
@@ -105,7 +128,6 @@ def main():
                 response['response']['card']['type'] = card['type']
                 response['response']['card']['title'] = card['title']
                 response['response']['card']['image_id'] = card['image_id']
-                response['response']['card']['button'] = card['button']
         else:
             response['response']['text'] = "Это конец диалога."
 
