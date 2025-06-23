@@ -35,7 +35,7 @@ class Scene:
     def handle_input(self, user_input):
         print(f"[Scene.handle_input] Получена фраза: '{user_input}'")
         for i, handler in enumerate(self.handlers):
-            print(f"[Scene.handle_input] Вызываю обработчик {i}: {handler.__class__.__name__}")
+            print(f"[Scene.handle_input] Вызываю обработчик")
             result = handler.handle(user_input, self)
             if result is not None:
                 print(f"[Scene.handle_input] Обработчик {handler.__class__.__name__} вернул результат.")
@@ -84,4 +84,4 @@ class HelpContextScene:
     #     return []
 
     def handle_input(self, user_input):
-        return self.previous_scene
+        return self.previous_scene.handle_input(user_input)

@@ -36,7 +36,7 @@ class HelpHandler(Handler):
             help_replicas = []
 
             if help_text:
-                help_replicas = [{"text": help_text, "buttons": [{"title": "Дальше", "hide": True}]}]  # add buttons
+                help_replicas = [{"text": help_text['text'], "buttons": help_text['buttons']}]  # add buttons
             elif self.global_help_text:
                 help_replicas = self.global_help_text
 
@@ -51,6 +51,7 @@ class WaitForNextHandler(Handler):
         self.waiting_for_next = False
 
     def handle(self, user_input, scene):
+        print('дальше внутри сцены')
         if hasattr(scene, 'waiting_for_next') and scene.waiting_for_next:
             if re.search(r"(дальше|далее|продолжи|вперёд|ещё)", user_input, re.IGNORECASE):
                 scene.waiting_for_next = False
@@ -70,9 +71,12 @@ class NextSceneHandler(Handler):
         self.load_scene_func = load_scene_func
 
     def handle(self, user_input, scene):
-        print(scene)
+        print('новая сцена')
         if scene.next_scenes:
             for pattern, next_scene_name in scene.next_scenes.items():
                 if re.search(pattern, user_input, re.IGNORECASE):
                     return self.load_scene_func(next_scene_name)
         return super().handle(user_input, scene)
+
+
+
