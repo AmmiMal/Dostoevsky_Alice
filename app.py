@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 import logging
 import threading
 
-from scene import Scene, HelpContextScene
+from scene import Scene, HelpContextScene, QuizScene
 from handlers import ExitHandler, HelpHandler, WaitForNextHandler, NextSceneHandler, FactHandler
 from utils import load_scene_from_file, format_buttons
 from config import DEFAULT_SCENE, END_SCENE, SCENES_DIR, HELP_SCENE
@@ -18,7 +18,10 @@ session_lock = threading.Lock()
 def load_scene(scene_name):
     resource = load_scene_from_file(scene_name)
     handlers = get_handlers(lambda name: load_scene(name))
-    return Scene(resource, handlers)
+    if resource.get("type") == "quiz":
+        return QuizScene(resource, handlers)
+    else:
+        return Scene(resource, handlers)
 
 
 def get_help_replicas():

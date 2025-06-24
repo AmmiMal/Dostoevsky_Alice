@@ -1,0 +1,62 @@
+{
+  "type": "quiz",
+  "replics": [
+    {
+      "question": "Как звали главного героя романа «Преступление и наказание»?",
+      "buttons": [
+        {
+          "title": "Рoдион Раскольников",
+          "hide": true
+        },
+        {
+          "title": "Лев Мышкин",
+          "hide": true
+        },
+        {
+          "title": "Фёдор Карамазов",
+          "hide": true
+        }
+      ],
+      "correct_answer": "рoдион раскольников"
+    },
+    {
+      "question": "Какое прозвище дали князю Мышкину в романе «Идиот»?",
+      "buttons": [
+        {
+          "title": "Святой",
+          "hide": true
+        },
+        {
+          "title": "Божий человек",
+          "hide": true
+        },
+        {
+          "title": "Идиот",
+          "hide": true
+        }
+      ],
+      "correct_answer": "идиот"
+    },
+    {
+      "question": "1",
+      "buttons": [
+        "1",
+        "2",
+        "3"
+      ],
+      "correct_answer": "2"
+    }
+  ],
+  "help": {
+    "text": "Завершите данный навык.",
+    "buttons": [
+      {
+        "title": "Выход",
+        "hide": true
+      }
+    ]
+  },
+  "next_scenes": {
+    "далее": "end"
+  }
+}
