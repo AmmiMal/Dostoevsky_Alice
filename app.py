@@ -119,7 +119,6 @@ def main():
             card = replica.get('card', {})
             buttons_data = replica.get('buttons', [])
             buttons_scene = next_scene.get_scene_buttons()
-
             all_buttons = buttons_data + buttons_scene
 
             response['response']['text'] = text

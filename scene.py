@@ -33,14 +33,10 @@ class Scene:
         return self.current_line >= len(self.replics)
 
     def handle_input(self, user_input):
-        print(f"[Scene.handle_input] Получена фраза: '{user_input}'")
         for i, handler in enumerate(self.handlers):
-            print(f"[Scene.handle_input] Вызываю обработчик")
             result = handler.handle(user_input, self)
             if result is not None:
-                print(f"[Scene.handle_input] Обработчик {handler.__class__.__name__} вернул результат.")
                 return result
-        print("[Scene.handle_input] Никакой обработчик не обработал запрос.")
         return self
 
     def get_next_scenes(self):
@@ -116,7 +112,7 @@ class QuizScene(Scene):
             if self.current_line == len(self.replics):
                 answer = {
                     "text": "Вы успешно прошли викторину! Навык завершён.",
-                    "buttons": ["Выход"]
+                    "buttons": [{"title": "Выход", "hide": True}]
                 }
             else:
                 answer = {
@@ -132,10 +128,9 @@ class QuizScene(Scene):
             return answer
 
     def check_answer(self, user_input):
-        correct_answer = self.replics[self.current_line - 1]["correct_answer"].strip().lower()
+        correct_answer = self.replics[self.current_line - 1]["correct_answer"]
         user_input = user_input.strip().lower()
-        is_correct = user_input == correct_answer
-
+        is_correct = re.search(correct_answer, user_input, re.IGNORECASE)
         if is_correct:
             self.last_answer_result = 'correct'
         else:
@@ -148,8 +143,6 @@ class QuizScene(Scene):
         return self.current_line >= len(self.replics)
 
     def handle_input(self, user_input):
-        print(f"[QuizScene.handle_input] Получен ввод: '{user_input}'")
-
         for handler in self.handlers:
             result = handler.handle(user_input, self)
             if result is not self:
@@ -157,3 +150,17 @@ class QuizScene(Scene):
 
         self.check_answer(user_input)
         return self
+
+    def get_scene_help(self):
+        if self.is_done():
+            return {
+                "text": "Вы успешно прошли викторину! Скажите 'выход' или нажмите кнопку.",
+                "buttons": {"title": "Выход", "hide": True}
+            }
+        else:
+            return {
+                "text": "Выберите один из предложенных вариантов ответа.",
+                "buttons": self.replics[self.current_line - 1]["buttons"]
+                if self.current_line < len(self.replics)
+                else [{"title": "Выход", "hide": True}]
+            }
